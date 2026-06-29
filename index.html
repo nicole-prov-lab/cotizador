@@ -126,9 +126,12 @@ input,select,button,textarea{font-family:inherit;font-size:14px}
   #ph{display:block!important}
   #sig{display:flex!important}
   .qh,.qr{display:grid!important}
-  .qr{page-break-inside:avoid}
-  .qr-override{display:none}
+  .qr{page-break-inside:avoid;grid-template-columns:40px 1fr 90px 78px 82px 22px!important}
+  .qr-override,.qr-links{display:none!important}
+  .qh{grid-template-columns:40px 1fr 90px 78px 82px 22px!important}
+  .print-thumb{display:block!important}
 }
+.print-thumb{display:none}
 #ph{display:none;padding:14px 14px 8px}
 .ph-row{display:flex;justify-content:space-between;align-items:flex-start}
 .ph-co{font-size:18px;font-weight:700}
@@ -139,8 +142,8 @@ input,select,button,textarea{font-family:inherit;font-size:14px}
 .ph-val{font-size:13px;font-weight:600}
 .ph-sec{font-size:13px;font-weight:600;margin:12px 0 5px;padding-bottom:3px;border-bottom:1px solid #e5e5e5}
 .ph-tc{font-size:10px;color:#888;margin-top:4px}
-#sig{display:none;gap:40px;font-size:11px;color:#777;padding:0 14px 26px;margin-top:36px}
-.sig-l{flex:1;border-top:0.5px solid #bbb;padding-top:5px}
+  #sig{display:none;gap:40px;font-size:11px;color:#777;padding:0 14px 26px;margin-top:36px}
+  .sig-l{flex:1;border-top:0.5px solid #bbb;padding-top:5px}
 </style>
 </head>
 <body>
@@ -216,13 +219,13 @@ input,select,button,textarea{font-family:inherit;font-size:14px}
     </div>
 
     <div class="co-bar">
-      <input type="text" id="co-name" placeholder="Empresa" value="Provinco Kitchen Solutions">
-      <input type="text" id="co-email" placeholder="Correo" value="bi@provinco.com.mx">
-      <input type="text" id="co-addr" placeholder="Dirección" value="Av República de Brasil 259, Cuauhtémoc Nte, 21200 Mexicali, B.C.">
+      <input type="text" id="co-name" placeholder="Empresa" value="Equipos Pro Cocina S.A.">
+      <input type="text" id="co-email" placeholder="Correo" value="ventas@equipospro.com">
+      <input type="text" id="co-addr" placeholder="Dirección" value="Av. Industrial 4520, Monterrey, N.L.">
     </div>
 
     <div class="qt-bar">
-      <input type="text" class="cli" id="cli-name" placeholder="Cliente" value="GOBIERNO DEL ESTADO DE BAJA CALIFORNIA">
+      <input type="text" class="cli" id="cli-name" placeholder="Cliente" value="Andrew">
       <input type="text" id="qt-num" placeholder="Cot. #" style="width:72px">
       <input type="date" id="qt-date" style="width:128px">
       <div class="tc-box">
@@ -296,7 +299,7 @@ input,select,button,textarea{font-family:inherit;font-size:14px}
   </div>
 </div>
 
-<div id="sig"><div class="sig-l">Firma autorizada</div><div class="sig-l">Firma del cliente</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -485,11 +488,130 @@ function renderQuote(){
     const usdTag=i.currency==='USD'?`<span class="usd-tag">USD ${fmt(i.price)}</span>`:'';
     const links=[i.img?`<a class="qr-lnk" href="${i.img}" target="_blank"><i class="ti ti-photo"></i>Imagen</a>`:'',i.spec?`<a class="qr-lnk" href="${i.spec}" target="_blank"><i class="ti ti-file-description"></i>Ficha</a>`:''].filter(Boolean).join('');
     return`<div class="qr">
+      <img class="print-thumb" src="${i.img||''}" style="width:36px;height:36px;border-radius:4px;object-fit:cover;border:0.5px solid #eee" onerror="this.style.visibility='hidden'">
       <div>
         <div class="qr-name">${i.name}${usdTag}</div>
         <div class="qr-sub">${[i.brand,i.model].filter(Boolean).join(' · ')}${i.desc?' — '+i.desc:''}</div>
         ${links?`<div class="qr-links">${links}</div>`:''}
-        <div class="qr-override"><input type="number" value="${i.override!==null?i.override:''}" placeholder="${fmt(base).replace('$','')} (ajustar precio)" step="0.01" min="0" oninput="setOverride('${i.id}',this.value)"></div>
+        <div class="qr-override"><input type="number" value="${i.override!==null?i.override:''}" placeholder="${fmt(base).replace('
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty('${i.id}',-1)">−</button>
+        <span class="qty-n">${i.qty}</span>
+        <button class="qty-btn" onclick="changeQty('${i.id}',1)">+</button>
+      </div>
+      <div class="q-unit">${fmt(eff)}</div>
+      <div class="q-price">${fmt(eff*i.qty)}</div>
+      <button class="q-del" onclick="removeItem('${i.id}')"><i class="ti ti-x"></i></button>
+    </div>`;
+  }).join('');
+  updateTotals();
+}
+
+function setBgt(v){bgt=v;document.getElementById('b20').classList.toggle('on',v===20000);document.getElementById('b25').classList.toggle('on',v===25000);updateTotals();}
+
+function updateTotals(){
+  const sub=quoteItems.reduce((s,i)=>s+effP(i)*i.qty,0);
+  const tax=sub*TAX,total=sub+tax;
+  document.getElementById('t-sub').textContent=fmt(sub);
+  document.getElementById('t-tax').textContent=fmt(tax);
+  document.getElementById('t-tot').textContent=fmt(total);
+  const pct=Math.min((total/bgt)*100,100);
+  const fill=document.getElementById('bgt-fill');
+  fill.style.width=pct+'%';
+  let color='#e24b4a',badge='';
+  const diff=bgt-total;
+  if(total<=bgt&&total>=bgt*0.8){color='#1d9e75';badge=`<span class="badge badge-g">${fmt(diff)} restante</span>`;}
+  else if(total<bgt*0.8){color='#e24b4a';badge=`<span class="badge badge-r">${fmt(diff)} bajo presupuesto</span>`;}
+  else{color='#ba7517';badge=`<span class="badge badge-a">${fmt(-diff)} excedido</span>`;}
+  fill.style.background=color;
+  document.getElementById('bgt-status').innerHTML=badge;
+}
+
+function toggleCF(){document.getElementById('cf').classList.toggle('open');}
+function fillPH(){
+  document.getElementById('ph-co').textContent=document.getElementById('co-name').value||'Empresa';
+  document.getElementById('ph-ct').textContent=[document.getElementById('co-email').value,document.getElementById('co-addr').value].filter(Boolean).join('  ·  ');
+  document.getElementById('ph-cli').textContent=document.getElementById('cli-name').value||'—';
+  document.getElementById('ph-date').textContent=document.getElementById('qt-date').value||new Date().toLocaleDateString('es-MX');
+  document.getElementById('ph-num').textContent=document.getElementById('qt-num').value||'—';
+  const hasUSD=quoteItems.some(i=>i.currency==='USD');
+  document.getElementById('ph-tc').textContent=hasUSD?`Tipo de cambio: $${tc()} MXN/USD`:'';
+}
+function doPrint(){fillPH();window.print();}
+function showToast(msg,dur=3500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+
+async function doEmail(){
+  if(!quoteItems.length){showToast('Agrega productos antes de enviar.');return;}
+  const btn=document.getElementById('ebtn');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2"></i> Generando…';
+  try{
+    const pdf=buildPDF();
+    const blob=pdf.output('blob');
+    const qNum=document.getElementById('qt-num').value||'SN';
+    const dateVal=document.getElementById('qt-date').value||new Date().toISOString().split('T')[0];
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`Cotizacion_${qNum}_${dateVal}.pdf`;a.click();URL.revokeObjectURL(url);
+    const subj=encodeURIComponent(`Cotización ${qNum} — ${dateVal}`);
+    const body=encodeURIComponent(`Estimado cliente,\n\nAdjuntamos la cotización ${qNum} con fecha ${dateVal}.\n\nQuedamos a sus órdenes.\n\n${document.getElementById('co-name').value}`);
+    setTimeout(()=>{window.open(`https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(RECIPIENT)}&subject=${subj}&body=${body}`,'_blank');showToast('PDF descargado — adjúntalo en Outlook ✓');},600);
+  }catch(e){showToast('Error: '+e.message);}
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-mail"></i> Enviar por correo';
+}
+
+function buildPDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const co=document.getElementById('co-name').value||'Empresa';
+  const em=document.getElementById('co-email').value;
+  const addr=document.getElementById('co-addr').value;
+  const client=document.getElementById('cli-name').value||'—';
+  const qNum=document.getElementById('qt-num').value||'—';
+  const dateVal=document.getElementById('qt-date').value||new Date().toLocaleDateString('es-MX');
+  const hasUSD=quoteItems.some(i=>i.currency==='USD');
+  doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(co,14,17);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90,90,90);
+  doc.text([em,addr].filter(Boolean).join('  ·  '),14,23);
+  doc.setDrawColor(180);doc.line(14,27,196,27);
+  doc.setFontSize(9);doc.setTextColor(120);
+  doc.text('CLIENTE',14,33);doc.text('COTIZACIÓN #',120,33);doc.text('FECHA',165,33);
+  doc.setFontSize(11);doc.setTextColor(20);doc.setFont('helvetica','bold');
+  doc.text(client,14,39);doc.text(qNum,120,39);doc.text(dateVal,165,39);
+  doc.setFont('helvetica','normal');
+  if(hasUSD){doc.setFontSize(8);doc.setTextColor(100);doc.text(`Tipo de cambio: $${tc()} MXN/USD`,14,45);}
+  const rows=quoteItems.map(i=>{
+    const eff=effP(i);
+    const prod=[i.name,[i.brand,i.model].filter(Boolean).join(' · ')].filter(Boolean).join('\n');
+    return[prod,i.qty,fmt(eff),fmt(eff*i.qty)];
+  });
+  const sub=quoteItems.reduce((s,i)=>s+effP(i)*i.qty,0);
+  const tax=sub*TAX,total=sub+tax;
+  doc.autoTable({
+    startY:hasUSD?51:45,
+    head:[['Producto / Marca / Modelo','Cant.','Precio unit. (MXN)','Subtotal (MXN)']],
+    body:rows,
+    foot:[
+      [{content:'Subtotal (antes de IVA)',colSpan:3,styles:{halign:'right',fontStyle:'normal'}},fmt(sub)],
+      [{content:'IVA (8%)',colSpan:3,styles:{halign:'right',fontStyle:'normal'}},fmt(tax)],
+      [{content:'TOTAL',colSpan:3,styles:{halign:'right',fontStyle:'bold'}},fmt(total)],
+    ],
+    headStyles:{fillColor:[26,26,26],textColor:255,fontSize:9},
+    footStyles:{fillColor:[240,240,240],textColor:30,fontSize:10},
+    bodyStyles:{fontSize:9,cellPadding:3},
+    columnStyles:{0:{cellWidth:90},1:{cellWidth:15,halign:'center'},2:{cellWidth:42,halign:'right'},3:{cellWidth:35,halign:'right'}},
+    alternateRowStyles:{fillColor:[250,250,248]},
+    margin:{left:14,right:14},
+  });
+  return doc;
+}
+
+document.getElementById('qt-date').value=new Date().toISOString().split('T')[0];
+['sm-flt','sm-dsc','sm-mgn','sm-list','sm-cur'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',calcSM);});
+updateTotals();
+syncSheet();
+</script>
+</body>
+</html>
+,'')} (ajustar precio)" step="0.01" min="0" oninput="setOverride('${i.id}',this.value)"></div>
       </div>
       <div class="qty-ctrl">
         <button class="qty-btn" onclick="changeQty('${i.id}',-1)">−</button>
