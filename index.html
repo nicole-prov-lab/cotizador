@@ -139,7 +139,7 @@ input,select,button,textarea{font-family:inherit;font-size:14px}
 }
 #ph{display:none;padding:14px 14px 8px}
 .ph-row{display:block}
-.ph-logo{width:3.2in;height:1.05in;object-fit:contain;display:block;margin-bottom:0.15in}
+.ph-logo{width:5in;height:1.65in;object-fit:contain;object-position:left;display:block;margin-bottom:0.12in}
 .ph-co-row{display:flex;justify-content:space-between;align-items:flex-start}
 .ph-co{font-size:18px;font-weight:700}
 .ph-ct{font-size:11px;color:#555;margin-top:3px}
@@ -549,10 +549,10 @@ async function buildPDF(){
     const dataUrl=await loadLogoAsDataURL();
     if(dataUrl){
       const ext=dataUrl.split(';')[0].split('/')[1].toUpperCase();
-      doc.addImage(dataUrl,ext,14,10,81.3,26.8);
+      doc.addImage(dataUrl,ext,14,10,110,36);
     }
   }catch(e){}
-  const infoY=10+26.8+4; // logo height + ~2-line gap
+  const infoY=10+36+4; // logo height + ~2-line gap
   doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(co,14,infoY);
   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90,90,90);
   doc.text([em,addr].filter(Boolean).join('  ·  '),14,infoY+6);
