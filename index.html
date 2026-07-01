@@ -455,7 +455,7 @@ function renderQuote(){
     const eff=effP(i);
     const usdTag=i.currency==='USD'?`<span class="usd-tag">USD ${fmt(i.price)}</span>`:'';
     const links=[i.img?`<a class="qr-lnk" href="${i.img}" target="_blank"><i class="ti ti-photo"></i>Imagen</a>`:'',i.spec?`<a class="qr-lnk" href="${i.spec}" target="_blank"><i class="ti ti-file-description"></i>Ficha</a>`:''].filter(Boolean).join('');
-    const thumb=i.img?`<img class="qr-img" src="${i.img}" alt="" onerror="this.style.display='none'">`:`<div class="qr-img-ph"></div>`;
+    const thumb=i.img?`<img class="qr-img" src="${i.img}" alt="" style="width:120px;height:120px;min-width:120px;min-height:120px;object-fit:cover;border-radius:9px;border:0.5px solid #eee;display:block" onerror="this.style.display='none'">`:`<div class="qr-img-ph" style="width:120px;height:120px;min-width:120px;min-height:120px;border-radius:9px;background:#f5f5f3;display:block"></div>`;
     return`<div class="qr" id="qrow-${i.id}">${thumb}<div>
       <div class="qr-name">${i.name}${usdTag}</div>
       <div class="qr-sub">${[i.brand,i.model].filter(Boolean).join(' · ')}${i.desc?' — '+i.desc:''}</div>
